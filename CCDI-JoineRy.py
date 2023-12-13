@@ -19,6 +19,7 @@ import warnings
 import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 
+
 parser = argparse.ArgumentParser(
                     prog='CCDI-JoineRy.py',
                     description='Takes a set of TSV outputs from the CCDI Explorer, concatenates and restores ids to match the given CCDI template.',
