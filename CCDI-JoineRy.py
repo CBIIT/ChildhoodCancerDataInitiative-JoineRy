@@ -32,7 +32,7 @@ required_arg.add_argument(
     '-d',
     '--directory', 
     type=str,
-    help='directory of tsv node files', 
+    help='directory of tsv/csv node files', 
     required=True)
 
 required_arg.add_argument(
@@ -50,7 +50,7 @@ args = parser.parse_args()
 directory_path=args.directory
 template_path=args.template
 
-print('\nThe CCDI submission template is created from the node tsvs.\n\n')
+print('\nThe CCDI submission template is created from the node tsv/csv files.\n\n')
 
 
 ##############
@@ -88,10 +88,20 @@ for sheet_name in xlsx_model.sheet_names:
 
 directory_file_list=os.listdir(directory_path)
 
+# Separate CSV and TSV files
+csv_files = [file for file in directory_file_list if file.lower().endswith('.csv')]
+tsv_files = [file for file in directory_file_list if file.lower().endswith('.tsv')]
+
+
 dfl_dfs={}
 
-for file in directory_file_list:
-    df=pd.read_csv(directory_path+file, sep="\t")
+for tsv_file in tsv_files:
+    df=pd.read_csv(directory_path+'/'+tsv_file, sep="\t")
+    df_type=df['type'].unique().tolist()[0]
+    dfl_dfs[df_type]=df
+
+for csv_file in csv_files:
+    df=pd.read_csv(directory_path+'/'+csv_file)
     df_type=df['type'].unique().tolist()[0]
     dfl_dfs[df_type]=df
 
@@ -154,8 +164,35 @@ for node in dfl_dfs.items():
                 if not node_df[new_id].isna().all():
                     node_df[new_col]=node_df[new_col].str.split("::").str[1]
 
-        #reformat the dataframe into the same order of the template.
+        #for columns in the model
+        for column in model_dfs[type].columns.tolist():
+            #if the column is in the data
+            if column in node_df.columns.tolist():
+                #pass
+                pass
+            #otherwise
+            else:
+                #add a blank column for that property
+                node_df[column]=""
+
+        #for columns in the data
+        for column in node_df.columns.tolist():
+            #if the column is in the model
+            if column in model_dfs[type].columns.tolist():
+                #pass
+                pass
+            #otherwise
+            else:
+                #remove the extra column
+                node_df=node_df.drop(column, axis=1)
+
+        #Then reorder the columns 
         node_df=node_df[model_dfs[type].columns]
+
+        #clean up
+        node_df=node_df.fillna("")
+
+        #And apply it back to the list of data frames
         dfl_dfs[type]=node_df
 
 
